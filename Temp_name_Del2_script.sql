@@ -129,17 +129,31 @@ CREATE INDEX ITEM_DESCRIPTION_INDX ON ITEM (ITEM_DESCRIPTION);
 --database (for example, to allow the user to insert, delete or update through the stored
 --procedures). At least one of the stored procedures must use parameters, use
 --conditional logic and TRY .. CATCH. Explain the purpose of each of the stored
---procedures.
+--procedures.
+
 
 --TRIGGER
 GO
 CREATE TRIGGER TASK_STAT_TRIGGER ON TASK
 AFTER UPDATE
 AS
-DECLARE @ENDTIME DATE
+DECLARE @TASKNUM CHAR(6), @ENDTIME DATE, @END_COUNT INT
 BEGIN
 
-IF( SELECT @ENDTIME = TASK_END_DATE FROM TASK )
+SELECT @TASKNUM = TASK_NUM FROM INSERTED
+SELECT @ENDTIME = TASK_END_DATE FROM TASK 
+SELECT @END_COUNT = (SELECT(*) FROM INSERTED WHERE TASK_END_DATE = @ENDTIME)
+
+
+IF @END_COUNT > 0
+	UPDATE TASK
+	SET TASK_STATUS = 'COMPLETE'
+	WHERE TASK_NUM = @TASKNUM
+
+
+	
+	
+
 
 END;
 
