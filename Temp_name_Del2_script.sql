@@ -99,11 +99,11 @@ INSERT INTO CONTENTS VALUES ('004', 'I00001');
 INSERT INTO CONTENTS VALUES ('005', 'I00004');
 
 
---2ND DELIVERABLE CHANGES
+---------------------------------------------2ND DELIVERABLE CHANGES-------------------------------------------------------------------
 
 --ADDING CHECK CONSTRAINT ON TASK STATUS (TASK TABLE)
 ALTER TABLE TASK
-ADD CONSTRAINT CHECK_TASK_STATUS_TASK CHECK (TASK_STATUS = 'OPEN' OR TASK_STATUS = 'ONGOING' OR TASK_STATUS = 'CLOSE'); 
+ADD CONSTRAINT CHECK_TASK_STATUS_TASK CHECK (TASK_STATUS = 'OPEN' OR TASK_STATUS = 'IN PROGRESS' OR TASK_STATUS = 'COMPLETE'); 
 
 --ADDING UNIQUE CONSTRAINT ON PHONE_NUMBER( VOLUNTEER TABLE)
 ALTER TABLE VOLUNTEER
@@ -118,6 +118,18 @@ CREATE INDEX VOLUNTEER_NAME_INDX ON VOLUNTEER (VOLUNTEER_FNAME, VOLUNTEER_LNAME)
 DROP INDEX TASK_NUM_INDX ON TASK
 
 CREATE INDEX ITEM_DESCRIPTION_INDX ON ITEM (ITEM_DESCRIPTION);
+ 
+-- 3 COMPLEX QUERIES -- > aggregate operators, group by clause, order by clause, subqueries and involve table joins
+
+
+-- 3 COMPLEX VIEWS -- > 2 OF THEM RELATED TO SECURITY OR "NEED TO KNOW" 
+
+
+-- 2 STORED PROCEDURES -- > that enact business rules that must be supported by the
+--database (for example, to allow the user to insert, delete or update through the stored
+--procedures). At least one of the stored procedures must use parameters, use
+--conditional logic and TRY .. CATCH. Explain the purpose of each of the stored
+--procedures.
 
 --TRIGGER
 GO
@@ -130,3 +142,5 @@ BEGIN
 IF( SELECT @ENDTIME = TASK_END_DATE FROM TASK )
 
 END;
+
+-- DATABASE ADMINSTRATOR -> LOGIN USERS AND PRIVILIGES
