@@ -119,6 +119,9 @@ CREATE INDEX VOLUNTEER_NAME_INDX ON VOLUNTEER (VOLUNTEER_FNAME, VOLUNTEER_LNAME)
 DROP INDEX TASK_NUM_INDX ON TASK
 
 CREATE INDEX ITEM_DESCRIPTION_INDX ON ITEM (ITEM_DESCRIPTION);
+
+--------------------------------------------DELIVERABLE 3-----------------------------------------------
+
  
 --------------------------------3 COMPLEX QUERIES-----------------------------------------
 
@@ -183,7 +186,7 @@ WHERE I.ITEM_VALUE BETWEEN '0.99' AND '3.50';
 
 SELECT * FROM ITEM_PRICE_VIEW;
 
-------------------------------------------------STORED PROCEDURES----------------------------------------------------
+------------------------------------------------STORED PROCEDURES------------------------------------------------
 
 -- TRY TO DELETE A VOLUNTEER 
 
