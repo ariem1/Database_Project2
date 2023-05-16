@@ -74,6 +74,7 @@ INSERT INTO TASK VALUES ('03','Packing','In progress');
 INSERT INTO TASK VALUES ('04','Checking ','In progress');
 INSERT INTO TASK VALUES ('05','Shipping','In progress');
 
+
 INSERT INTO ASSIGNMENT VALUES ((SELECT VOLUNTEER_ID FROM VOLUNTEER WHERE VOLUNTEER_FNAME = 'Josh'),'01',GETDATE(),'11:20', GETDATE(),'11:25');
 INSERT INTO ASSIGNMENT VALUES ((SELECT VOLUNTEER_ID FROM VOLUNTEER WHERE VOLUNTEER_FNAME = 'Tamara'),'02', GETDATE(),'11:30',NULL, NULL);
 INSERT INTO ASSIGNMENT VALUES ((SELECT VOLUNTEER_ID FROM VOLUNTEER WHERE VOLUNTEER_FNAME = 'Kye'),'03', GETDATE(), '8:30' , NULL , NULL);
@@ -118,12 +119,35 @@ CREATE INDEX VOLUNTEER_NAME_INDX ON VOLUNTEER (VOLUNTEER_FNAME, VOLUNTEER_LNAME)
 DROP INDEX TASK_NUM_INDX ON TASK
 
 CREATE INDEX ITEM_DESCRIPTION_INDX ON ITEM (ITEM_DESCRIPTION);
+
+--------------------------------------------DELIVERABLE 3-----------------------------------------------
+
  
--- 3 COMPLEX QUERIES -- > aggregate operators, group by clause, order by clause, subqueries and involve table joins
+--------------------------------3 COMPLEX QUERIES-----------------------------------------
+
+---------------------------------------1---------------------------------------------------
+-- FIND WHICH ITEM IS IN EACH PACKAGE
+SELECT C.PACKAGE_NUM, I.ITEM_ID, ITEM_DESCRIPTION
+FROM ITEM I JOIN CONTENTS C
+ON I.ITEM_ID = C.ITEM_ID
+JOIN PACKAGE P 
+ON C.PACKAGE_NUM = P.PACKAGE_NUM
+WHERE P.TASK_NUM = (SELECT TASK_NUM
+					FROM TASK
+					WHERE TASK_STATUS = 'Complete')
+ORDER BY C.PACKAGE_NUM
+
+---------------------------------------2---------------------------------------------------
 
 
--- 3 COMPLEX VIEWS -- > 2 OF THEM RELATED TO SECURITY OR "NEED TO KNOW" 
---------------------------1-----------------------------------------
+
+---------------------------------------3---------------------------------------------------
+
+
+
+--------------------------------3 COMPLEX VIEWS--------------------------------------------
+
+---------------------------------------1---------------------------------------------------
 GO
 CREATE VIEW TASK_VIEW
 AS
@@ -134,10 +158,9 @@ JOIN TASK T
 ON T.TASK_NUM = A.TASK_NUM 
 WHERE A.TASK_NUM = T.TASK_NUM;
 
-
 SELECT * FROM TASK_VIEW
 
---------------------------2-----------------------------------------
+---------------------------------------2---------------------------------------------------
 GO
 CREATE VIEW  VOLUNTEER_PACKAGE_VIEW
 AS
@@ -153,7 +176,7 @@ GROUP BY P.PACKAGE_NUM, V.VOLUNTEER_FNAME,P.DATE_CREATED;
 
 SELECT * FROM  VOLUNTEER_PACKAGE_VIEW
 
---------------------------3-----------------------------------------
+---------------------------------------3---------------------------------------------------
 GO 
 CREATE VIEW ITEM_PRICE_VIEW
 AS
@@ -163,16 +186,14 @@ WHERE I.ITEM_VALUE BETWEEN '0.99' AND '3.50';
 
 SELECT * FROM ITEM_PRICE_VIEW;
 
--- 2 STORED PROCEDURES -- > that enact business rules that must be supported by the
---database (for example, to allow the user to insert, delete or update through the stored
---procedures). At least one of the stored procedures must use parameters, use
---conditional logic and TRY .. CATCH. Explain the purpose of each of the stored
---procedures.
+------------------------------------------------STORED PROCEDURES------------------------------------------------
+
+-- TRY TO DELETE A VOLUNTEER 
 
 
---TRIGGER
+---------------------------------------------------TRIGGER------------------------------------------------------
 GO
-CREATE TRIGGER TASK_STAT_TRIGGER ON ASSIGNMENT
+ALTER TRIGGER TASK_STAT_TRIGGER ON ASSIGNMENT
 AFTER UPDATE
 AS
 DECLARE @TASKNUM CHAR(6), @STARTDATE DATE, @STARTDATE_COUNT INT,
@@ -202,7 +223,7 @@ IF @STARTTIME_COUNT > 0
 	UPDATE TASK
 	SET TASK_STATUS = 'In Progress'
 	WHERE TASK_NUM = @TASKNUM
-
+		
 --IF END TIME IS ADDED = COMPLETE
 IF @END_COUNT > 0
 	UPDATE TASK
@@ -210,11 +231,44 @@ IF @END_COUNT > 0
 	WHERE TASK_NUM = @TASKNUM
 END;
 
--- DATABASE ADMINSTRATOR -> LOGIN USERS AND PRIVILIGES
-
 SELECT * FROM ASSIGNMENT
 SELECT * FROM TASK
+select * from volunteer
+
+----------------------------------------------TESTING TRIGGER----------------------------------------------------------------------
+UPDATE ASSIGNMENT
+SET TASK_START_TIME = '10:00'
+WHERE TASK_NUM = '05' AND VOLUNTEER_ID = '10014'
+
+INSERT INTO VOLUNTEER VALUES (NEXT VALUE FOR VOLUNTEER_SQ,'Amanda','Enid','2049086745','38 Av Road','Westmount','CA', 'H3M2V5');
+INSERT INTO TASK VALUES ('06','Packing', 'Not Started');
+
+INSERT INTO ASSIGNMENT VALUES ((SELECT VOLUNTEER_ID FROM VOLUNTEER WHERE VOLUNTEER_FNAME = 'Amanda'),'06', NULL, NULL, NULL, NULL);
 
 UPDATE ASSIGNMENT
+SET TASK_START_DATE = GETDATE()
+WHERE TASK_NUM = '06' AND VOLUNTEER_ID = '10018'
+
 SET TASK_END_DATE = GETDATE(), TASK_END_TIME = '11:45'
 WHERE TASK_NUM = '02'
+
+
+-------------------------DATABASE ADMINSTRATOR-----------------------------
+CREATE LOGIN login_admin WITH PASSWORD = 'DatabaseProject2023';
+CREATE USER user_admin FOR LOGIN login_admin
+GRANT SELECT, INSERT, DELETE, UPDATE ON VOLUNTEER TO user_admin WITH GRANT OPTION
+
+-------------------------OTHER LOGINS------------------------------------
+CREATE LOGIN LOGIN1 WITH PASSWORD = 'DatabaseProject2023';
+CREATE USER USER1 FOR LOGIN LOGIN1
+
+CREATE LOGIN LOGIN2 WITH PASSWORD = 'DatabaseProject2023';
+CREATE USER USER2 FOR LOGIN LOGIN2
+
+---------------------------CREATE ROLES WITH LOGINS--------------------------
+CREATE ROLE DATABASE_TEAM_MEMBERS AUTHORIZATION user_admin
+ALTER ROLE DATABASE_TEAM_MEMBERS ADD MEMBER LOGIN1;
+ALTER ROLE DATABASE_TEAM_MEMBERS ADD MEMBER LOGIN2;
+
+GRANT ALL TO DATABASE_TEAM_MEMBERS WITH GRANT OPTION;
+
