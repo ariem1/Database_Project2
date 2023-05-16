@@ -74,7 +74,6 @@ INSERT INTO TASK VALUES ('03','Packing','In progress');
 INSERT INTO TASK VALUES ('04','Checking ','In progress');
 INSERT INTO TASK VALUES ('05','Shipping','In progress');
 
-
 INSERT INTO ASSIGNMENT VALUES ((SELECT VOLUNTEER_ID FROM VOLUNTEER WHERE VOLUNTEER_FNAME = 'Josh'),'01',GETDATE(),'11:20', GETDATE(),'11:25');
 INSERT INTO ASSIGNMENT VALUES ((SELECT VOLUNTEER_ID FROM VOLUNTEER WHERE VOLUNTEER_FNAME = 'Tamara'),'02', GETDATE(),'11:30',NULL, NULL);
 INSERT INTO ASSIGNMENT VALUES ((SELECT VOLUNTEER_ID FROM VOLUNTEER WHERE VOLUNTEER_FNAME = 'Kye'),'03', GETDATE(), '8:30' , NULL , NULL);
@@ -101,6 +100,7 @@ INSERT INTO CONTENTS VALUES ('005', 'I00004');
 
 
 ---------------------------------------------2ND DELIVERABLE CHANGES-------------------------------------------------------------------
+
 --ADDING CHECK CONSTRAINT ON TASK STATUS (TASK TABLE)
 ALTER TABLE TASK
 ADD CONSTRAINT CHECK_TASK_STATUS_TASK CHECK (TASK_STATUS = 'OPEN' OR TASK_STATUS = 'IN PROGRESS' OR TASK_STATUS = 'COMPLETE'); 
@@ -118,44 +118,18 @@ CREATE INDEX VOLUNTEER_NAME_INDX ON VOLUNTEER (VOLUNTEER_FNAME, VOLUNTEER_LNAME)
 DROP INDEX TASK_NUM_INDX ON TASK
 
 CREATE INDEX ITEM_DESCRIPTION_INDX ON ITEM (ITEM_DESCRIPTION);
-
---------------------------------------------DELIVERABLE 3-----------------------------------------------
-
  
---------------------------------3 COMPLEX QUERIES-----------------------------------------
+-- 3 COMPLEX QUERIES -- > aggregate operators, group by clause, order by clause, subqueries and involve table joins
 
----------------------------------------1---------------------------------------------------
--- FIND WHICH ITEM IS IN EACH PACKAGE WHERE TASK STATUS IS COMPLETE
-SELECT C.PACKAGE_NUM, I.ITEM_ID, ITEM_DESCRIPTION
-FROM ITEM I JOIN CONTENTS C
-ON I.ITEM_ID = C.ITEM_ID
-JOIN PACKAGE P 
-ON C.PACKAGE_NUM = P.PACKAGE_NUM
-WHERE P.TASK_NUM IN (SELECT TASK_NUM
-					FROM TASK
-					WHERE TASK_STATUS = 'Complete')
-ORDER BY C.PACKAGE_NUM
 
----------------------------------------2---------------------------------------------------
---FIND WHICH VOLUNTEER IS NOT DONE WITH THEIR TASKS, DISPLAY THEIR TASK 
-SELECT A.TASK_NUM, T.TASK_DESCRIPTION, VOLUNTEER_FNAME, VOLUNTEER_LNAME
-FROM VOLUNTEER V JOIN ASSIGNMENT A
-ON V.VOLUNTEER_ID = A.VOLUNTEER_ID
-JOIN TASK T
-ON A.TASK_NUM = T.TASK_NUM
-WHERE TASK_STATUS != 'Complete'
-ORDER BY TASK_DESCRIPTION
 
----------------------------------------3---------------------------------------------------
---FIND WHICH TASK TOOK ONLY A DAY OR LESS THAN A DAY TO DO
-SELECT A.TASK_NUM, T.TASK_DESCRIPTION
-FROM ASSIGNMENT A JOIN TASK T
-ON A.TASK_NUM = T.TASK_NUM
-WHERE DATEDIFF(DAY,TASK_START_DATE, TASK_END_DATE) <= 1 
 
---------------------------------3 COMPLEX VIEWS--------------------------------------------
 
----------------------------------------1---------------------------------------------------
+
+
+
+-- 3 COMPLEX VIEWS -- > 2 OF THEM RELATED TO SECURITY OR "NEED TO KNOW" 
+--------------------------1-----------------------------------------
 GO
 CREATE VIEW TASK_VIEW
 AS
@@ -166,9 +140,10 @@ JOIN TASK T
 ON T.TASK_NUM = A.TASK_NUM 
 WHERE A.TASK_NUM = T.TASK_NUM;
 
+
 SELECT * FROM TASK_VIEW
 
----------------------------------------2---------------------------------------------------
+--------------------------2-----------------------------------------
 GO
 CREATE VIEW  VOLUNTEER_PACKAGE_VIEW
 AS
@@ -184,7 +159,7 @@ GROUP BY P.PACKAGE_NUM, V.VOLUNTEER_FNAME,P.DATE_CREATED;
 
 SELECT * FROM  VOLUNTEER_PACKAGE_VIEW
 
----------------------------------------3---------------------------------------------------
+--------------------------3-----------------------------------------
 GO 
 CREATE VIEW ITEM_PRICE_VIEW
 AS
@@ -194,16 +169,17 @@ WHERE I.ITEM_VALUE BETWEEN '0.99' AND '3.50';
 
 SELECT * FROM ITEM_PRICE_VIEW;
 
-------------------------------------STORED PROCEDURES------------------------------------------------
-
--------------------------------------------1---------------------------------------------------
+-- 2 STORED PROCEDURES -- > that enact business rules that must be supported by the
+--database (for example, to allow the user to insert, delete or update through the stored
+--procedures). At least one of the stored procedures must use parameters, use
+--conditional logic and TRY .. CATCH. Explain the purpose of each of the stored
+--procedures.
 GO
-CREATE PROCEDURE VOL_DEL @VOL_ID CHAR(6)
+ALTER PROCEDURE VOL_DEL @VOL_ID CHAR(6)
 AS
 BEGIN
 BEGIN TRY
 
--- ADDS TO ASSIGNMENT TABLE, INSERT INTO ASSIGNMENT, PARAMETERS = VOLUNTEER_ID, TASK_NUM, CHECKS (TRY & CATCH), IF TASK_START DATE = 'SPACE' = NULL 
 DELETE FROM VOLUNTEER  
 WHERE VOLUNTEER_ID=@VOL_ID;
  THROW 1,'THROW',1
@@ -216,9 +192,9 @@ END;
 
 EXEC VOL_DEL 10020
 
----------------------------------------2---------------------------------------------------
+
 GO
-CREATE PROCEDURE ITEM_INSERT @ID CHAR(6), @DESC VARCHAR(50),@VAL NUMERIC(5,2)
+alter PROCEDURE ITEM_INSERT @ID CHAR(6), @DESC VARCHAR(50),@VAL NUMERIC(5,2)
 AS
 BEGIN
 BEGIN TRY 
@@ -233,12 +209,23 @@ PRINT 'ERROR WITH INSERT'
 END CATCH
 END;
 
+
 EXEC ITEM_INSERT 'I00005','Chicken','2.50'
 
----------------------------------------------------TRIGGER------------------------------------------------------
+
+
+SELECT * FROM VOLUNTEER
+SELECT * FROM ITEM
+SELECT * FROM PACKAGE
+SELECT * FROM ASSIGNMENT
+SELECT * FROM TASK
+SELECT * FROM CONTENTS
+
+
+--TRIGGER
 GO
 CREATE TRIGGER TASK_STAT_TRIGGER ON ASSIGNMENT
-AFTER UPDATE, INSERT
+AFTER UPDATE
 AS
 DECLARE @TASKNUM CHAR(6), @STARTDATE DATE, @STARTDATE_COUNT INT,
 @STARTTIME CHAR(5), @STARTTIME_COUNT INT, 
@@ -267,7 +254,7 @@ IF @STARTTIME_COUNT > 0
 	UPDATE TASK
 	SET TASK_STATUS = 'In Progress'
 	WHERE TASK_NUM = @TASKNUM
-		
+
 --IF END TIME IS ADDED = COMPLETE
 IF @END_COUNT > 0
 	UPDATE TASK
@@ -275,49 +262,11 @@ IF @END_COUNT > 0
 	WHERE TASK_NUM = @TASKNUM
 END;
 
+-- DATABASE ADMINSTRATOR -> LOGIN USERS AND PRIVILIGES
+
 SELECT * FROM ASSIGNMENT
 SELECT * FROM TASK
-select * from volunteer
-
-----------------------------------------------TESTING TRIGGER----------------------------------------------------------------------
-UPDATE ASSIGNMENT
-SET TASK_START_TIME = '10:00'
-WHERE TASK_NUM = '05' AND VOLUNTEER_ID = '10014'
-
-INSERT INTO VOLUNTEER VALUES (NEXT VALUE FOR VOLUNTEER_SQ,'Amanda','Enid','2049086745','38 Av Road','Westmount','CA', 'H3M2V5');
-INSERT INTO TASK VALUES ('06','Packing', 'Not Started');
-
-INSERT INTO VOLUNTEER VALUES (NEXT VALUE FOR VOLUNTEER_SQ,'Seyfried','Enid','2044449000','38 Av Road','Westmount','CA', 'H3M2V5');
-INSERT INTO TASK VALUES ('07','Packing', 'Not Started');
-
-INSERT INTO ASSIGNMENT VALUES ((SELECT VOLUNTEER_ID FROM VOLUNTEER WHERE VOLUNTEER_FNAME = 'Amanda'),'06', NULL, NULL, NULL, NULL);
-INSERT INTO ASSIGNMENT VALUES ((SELECT VOLUNTEER_ID FROM VOLUNTEER WHERE VOLUNTEER_FNAME = 'Seyfried'),'07', GETDATE(), NULL, NULL, NULL);
-
 
 UPDATE ASSIGNMENT
-SET TASK_START_DATE = GETDATE()
-WHERE TASK_NUM = '06' AND VOLUNTEER_ID = '10018'
-
 SET TASK_END_DATE = GETDATE(), TASK_END_TIME = '11:45'
 WHERE TASK_NUM = '02'
-
-
--------------------------DATABASE ADMINSTRATOR-----------------------------
-CREATE LOGIN login_admin WITH PASSWORD = 'DatabaseProject2023';
-CREATE USER user_admin FOR LOGIN login_admin
-GRANT SELECT, INSERT, DELETE, UPDATE ON VOLUNTEER TO user_admin WITH GRANT OPTION
-
--------------------------OTHER LOGINS------------------------------------
-CREATE LOGIN LOGIN1 WITH PASSWORD = 'DatabaseProject2023';
-CREATE USER USER1 FOR LOGIN LOGIN1
-
-CREATE LOGIN LOGIN2 WITH PASSWORD = 'DatabaseProject2023';
-CREATE USER USER2 FOR LOGIN LOGIN2
-
----------------------------CREATE ROLES WITH LOGINS--------------------------
-CREATE ROLE DATABASE_TEAM_MEMBERS AUTHORIZATION user_admin
-ALTER ROLE DATABASE_TEAM_MEMBERS ADD MEMBER LOGIN1;
-ALTER ROLE DATABASE_TEAM_MEMBERS ADD MEMBER LOGIN2;
-
-GRANT ALL TO DATABASE_TEAM_MEMBERS WITH GRANT OPTION;
-
