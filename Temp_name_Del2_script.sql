@@ -124,7 +124,7 @@ CREATE INDEX ITEM_DESCRIPTION_INDX ON ITEM (ITEM_DESCRIPTION);
 
 
 -- 3 COMPLEX VIEWS -- > 2 OF THEM RELATED TO SECURITY OR "NEED TO KNOW" 
---------------------------1-----------------------------------------
+---------------------------------1-----------------------------------------
 GO
 CREATE VIEW TASK_VIEW
 AS
@@ -138,7 +138,7 @@ WHERE A.TASK_NUM = T.TASK_NUM;
 
 SELECT * FROM TASK_VIEW
 
---------------------------2-----------------------------------------
+---------------------------------2-----------------------------------------
 GO
 CREATE VIEW  VOLUNTEER_PACKAGE_VIEW
 AS
@@ -154,7 +154,7 @@ GROUP BY P.PACKAGE_NUM, V.VOLUNTEER_FNAME,P.DATE_CREATED;
 
 SELECT * FROM  VOLUNTEER_PACKAGE_VIEW
 
---------------------------3-----------------------------------------
+--------------------------------3-----------------------------------------
 GO 
 CREATE VIEW ITEM_PRICE_VIEW
 AS
@@ -211,7 +211,6 @@ IF @END_COUNT > 0
 	WHERE TASK_NUM = @TASKNUM
 END;
 
-
 SELECT * FROM ASSIGNMENT
 SELECT * FROM TASK
 select * from volunteer
@@ -230,4 +229,21 @@ UPDATE ASSIGNMENT
 SET TASK_START_DATE = GETDATE()
 WHERE TASK_NUM = '06' AND VOLUNTEER_ID = '10018'
 
+SET TASK_END_DATE = GETDATE(), TASK_END_TIME = '11:45'
+WHERE TASK_NUM = '02'
+
 -- DATABASE ADMINSTRATOR -> LOGIN USERS AND PRIVILIGES
+
+CREATE LOGIN LOGIN1 PASSWORD = 'DatabaseProject2023';
+CREATE LOGIN LOGIN2 WITH PASSWORD = 'DatabaseProject2023';
+
+CREATE USER USER1 FOR LOGIN1;
+CREATE USER USER2 FOR LOGIN2;
+
+CREATE ROLE DATABASE_TEAM_MEMBERS; 
+ALTER ROLE DATABASE_TEAM_MEMBERS ADD MEMBER LOGIN1;
+ALTER ROLE DATABASE_TEAM_MEMBERS ADD MEMBER LOGIN2;
+
+GRANT ALL TO DATABASE_TEAM_MEMBERS;
+
+
