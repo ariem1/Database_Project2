@@ -101,7 +101,6 @@ INSERT INTO CONTENTS VALUES ('005', 'I00004');
 
 
 ---------------------------------------------2ND DELIVERABLE CHANGES-------------------------------------------------------------------
-
 --ADDING CHECK CONSTRAINT ON TASK STATUS (TASK TABLE)
 ALTER TABLE TASK
 ADD CONSTRAINT CHECK_TASK_STATUS_TASK CHECK (TASK_STATUS = 'OPEN' OR TASK_STATUS = 'IN PROGRESS' OR TASK_STATUS = 'COMPLETE'); 
@@ -186,10 +185,45 @@ WHERE I.ITEM_VALUE BETWEEN '0.99' AND '3.50';
 
 SELECT * FROM ITEM_PRICE_VIEW;
 
-------------------------------------------------STORED PROCEDURES------------------------------------------------
+------------------------------------STORED PROCEDURES------------------------------------------------
 
--- TRY TO DELETE A VOLUNTEER 
+-------------------------------------------1---------------------------------------------------
+GO
+CREATE PROCEDURE VOL_DEL @VOL_ID CHAR(6)
+AS
+BEGIN
+BEGIN TRY
 
+DELETE FROM VOLUNTEER  
+WHERE VOLUNTEER_ID=@VOL_ID;
+ THROW 1,'THROW',1
+
+END TRY
+BEGIN CATCH
+PRINT 'USER DOES NOT EXIST'
+END CATCH
+END;
+
+EXEC VOL_DEL 10020
+
+---------------------------------------2---------------------------------------------------
+GO
+CREATE PROCEDURE ITEM_INSERT @ID CHAR(6), @DESC VARCHAR(50),@VAL NUMERIC(5,2)
+AS
+BEGIN
+BEGIN TRY 
+IF (SELECT COUNT(*) FROM ITEM I WHERE I.ITEM_ID = @ID)=0
+
+INSERT INTO ITEM VALUES (@ID,@DESC,@VAL)
+ELSE 
+THROW  1,'THROW',1
+END TRY
+BEGIN CATCH
+PRINT 'ERROR WITH INSERT'
+END CATCH
+END;
+
+EXEC ITEM_INSERT 'I00005','Chicken','2.50'
 
 ---------------------------------------------------TRIGGER------------------------------------------------------
 GO
